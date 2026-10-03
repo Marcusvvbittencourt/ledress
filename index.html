@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <!-- Chosen Palette: Warm Sand & Terracotta (Background: #FAF7F2, Primary: #2A2421, Accent: #C86A4B, Secondary: #8A7A70, Highlight: #D98A6C, Card: #FFFFFF) -->
+    <!-- Application Structure Plan: Visualização executiva em SPA dividida em 5 seções estratégicas interativas: (1) Panorama & Estratégias Comerciais, (2) Engenharia de Pricing & Calculadora de Margem, (3) Meta Ads & Funil de Criativos, (4) CRM & Playbook de WhatsApp, (5) Matriz Comparativa de Viabilidade. Inclui dashboard interativo de cálculo de desconto progressivo para demonstrar proteção de lucro absoluto e simulador de objeções de compra. Estrutura desenhada para leitura fluida por gestores e tomada de decisão ágil em 60 dias. -->
+    <!-- Visualization & Content Choices: 
+    - Desconto Progressivo (Tabela 1 do relatório): Gráfico Dual-Axis Bar/Line com Chart.js comparando Lucro Bruto Absoluto (R$) vs Margem Bruta (%) para demonstrar ganho de caixa ao subir UPT de 1 para 4 itens.
+    - Calculadora Interativa de Carrinho: JS vanilla para simular dinamicamente Ticket Médio, Lucro e Absorção de CAC conforme adiciona peças no carrinho.
+    - Matriz de Objeções (Tabela 2): Cards filtráveis/expansíveis por objeção (Caimento, Tamanho, Logística).
+    - Funil de Antecipação CRM: Timeline interativa por fases (D-30 a D-Day).
+    - Quadro Comparativo (Tabela 3): Tabela interativa com badges de classificação e destaques por critério (Giro vs Ticket).
+    Confirmando: ZERO gráficos SVG e ZERO Mermaid JS utilizados; apenas HTML/CSS Tailwind, Fontes Unicode e Canvas Chart.js. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estratégia e Growth E-commerce Moda Feminina | Relatório Executivo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            bg: '#FAF7F2',
+                            card: '#FFFFFF',
+                            primary: '#2A2421',
+                            secondary: '#8A7A70',
+                            accent: '#C86A4B',
+                            accentHover: '#B2593C',
+                            softBg: '#F3EDE6',
+                            border: '#E8DFD5',
+                            tag: '#F0E6DD'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        serif: ['"Playfair Display"', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #FAF7F2;
+            color: #2A2421;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .serif-title {
+            font-family: 'Playfair Display', serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 680px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 330px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 360px;
+            }
+        }
+        .nav-active {
+            border-bottom: 2px solid #C86A4B;
+            color: #C86A4B;
+            font-weight: 600;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+    <!-- Header / Navbar -->
+    <header class="sticky top-0 z-50 bg-[#FAF7F2]/95 backdrop-blur-md border-b border-brand-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex items-center space-x-3">
+                    <span class="w-9 h-9 rounded-full bg-brand-primary text-brand-bg flex items-center justify-center font-bold text-lg font-serif">L</span>
+                    <div>
+                        <h1 class="text-lg font-bold text-brand-primary leading-none">Consultoria Le Dress</h1>
+                        <p class="text-xs text-brand-secondary font-medium tracking-wider uppercase mt-1">Growth & Inteligência de Mercado</p>
+                    </div>
+                </div>
+                <div class="hidden lg:flex items-center space-x-2 bg-brand-softBg/60 p-1.5 rounded-full text-xs font-semibold text-brand-primary border border-brand-border">
+                    <span class="px-3 py-1 bg-brand-card rounded-full shadow-sm text-brand-accent">Plano Tático 60 Dias</span>
+                    <span class="px-3 py-1">Meta: 30.000 Peças</span>
+                    <span class="px-3 py-1">Ticket: R$ 250 - R$ 450</span>
+                </div>
+            </div>
+            
+            <!-- Navigation Tabs -->
+            <nav class="flex space-x-6 overflow-x-auto hide-scrollbar text-xs sm:text-sm font-medium border-t border-brand-border/40 pt-2 pb-1">
+                <button onclick="switchTab('estrategias')" id="tab-estrategias" class="nav-button nav-active py-2 px-1 whitespace-nowrap transition-colors">1. Estratégias Comerciais</button>
+                <button onclick="switchTab('pricing')" id="tab-pricing" class="nav-button py-2 px-1 text-brand-secondary hover:text-brand-primary whitespace-nowrap transition-colors">2. Engenharia de Pricing</button>
+                <button onclick="switchTab('meta-ads')" id="tab-meta-ads" class="nav-button py-2 px-1 text-brand-secondary hover:text-brand-primary whitespace-nowrap transition-colors">3. Meta Ads & Criativos</button>
+                <button onclick="switchTab('crm')" id="tab-crm" class="nav-button py-2 px-1 text-brand-secondary hover:text-brand-primary whitespace-nowrap transition-colors">4. CRM & Ecossistema VIP</button>
+                <button onclick="switchTab('matriz')" id="tab-matriz" class="nav-button py-2 px-1 text-brand-secondary hover:text-brand-primary whitespace-nowrap transition-colors">5. Avaliação Comparativa</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- TAB 1: ESTRATÉGIAS COMERCIAIS -->
+        <section id="sec-estrategias" class="tab-content space-y-8">
+            <div class="bg-brand-card rounded-2xl p-6 sm:p-8 border border-brand-border shadow-sm">
+                <div class="max-w-3xl">
+                    <span class="text-xs font-bold text-brand-accent uppercase tracking-widest bg-brand-tag px-3 py-1 rounded-md">Mapeamento de Mercado</span>
+                    <h2 class="text-2xl sm:text-3xl font-serif font-semibold text-brand-primary mt-3">Modelos Comerciais de Alta Performance no Varejo Feminino</h2>
+                    <p class="text-brand-secondary text-sm sm:text-base mt-3 leading-relaxed">
+                        A engenharia de vendas para o público de 28 a 45 anos com ticket médio entre R$ 250 e R$ 450 exige equilibrar atratividade comercial e autoridade de marca. Para escoar um lote crítico de 30.000 peças em 60 dias sem apelar para liquidações generalizadas, mapeamos 3 vetores validados por referências do setor como Shoulder, NV e Principessa.
+                    </p>
+                </div>
+
+                <!-- 3 Strategy Cards Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                    
+                    <!-- Strategy 1 -->
+                    <div class="bg-brand-bg rounded-xl p-6 border border-brand-border flex flex-col justify-between hover:shadow-md transition-shadow">
+                        <div>
+                            <div class="w-10 h-10 rounded-lg bg-brand-primary text-brand-bg flex items-center justify-center font-bold text-sm mb-4">01</div>
+                            <h3 class="font-serif text-lg font-bold text-brand-primary">Cápsulas Funcionais & Guarda-Roupa Inteligente</h3>
+                            <p class="text-xs text-brand-accent font-semibold mt-1">Conceito de Versatilidade & Multiplicação</p>
+                            <p class="text-xs text-brand-secondary mt-3 leading-relaxed">
+                                Reembala o estoque parado em seleções temáticas ("Office Look Elegante", "Transição Happy Hour"). A cliente não compra um item isolado, mas a solução para a incerteza diária sobre o que vestir.
+                            </p>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-brand-border/60 text-xs space-y-2">
+                            <div><strong class="text-brand-primary">Proposta de Valor:</strong> Praticidade e inteligência estética em looks coordenados.</div>
+                            <div><strong class="text-brand-primary">Senso de Urgência:</strong> Escassez editorial/curatorial ("Edição Limitada de Outono").</div>
+                        </div>
+                    </div>
+
+                    <!-- Strategy 2 -->
+                    <div class="bg-brand-bg rounded-xl p-6 border border-brand-border flex flex-col justify-between hover:shadow-md transition-shadow">
+                        <div>
+                            <div class="w-10 h-10 rounded-lg bg-brand-accent text-brand-card flex items-center justify-center font-bold text-sm mb-4">02</div>
+                            <h3 class="font-serif text-lg font-bold text-brand-primary">Drops Promocionais Curtos (Flash Sales)</h3>
+                            <p class="text-xs text-brand-accent font-semibold mt-1">Giro Acelerado em Lotes Fechados</p>
+                            <p class="text-xs text-brand-secondary mt-3 leading-relaxed">
+                                Liberação fracionada do estoque (lotes de 5k peças) por 48h a 72h sob temas específicos ("Especial Linho", "Festival de Tricot"). Ao encerrar o timer, as peças voltam ao valor normal.
+                            </p>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-brand-border/60 text-xs space-y-2">
+                            <div><strong class="text-brand-primary">Proposta de Valor:</strong> Acesso temporário à alta qualidade com remarcações de até 50-70%.</div>
+                            <div><strong class="text-brand-primary">Senso de Urgência:</strong> Relógio regressivo visível e aviso de esgotamento de grade por tamanho.</div>
+                        </div>
+                    </div>
+
+                    <!-- Strategy 3 -->
+                    <div class="bg-brand-bg rounded-xl p-6 border border-brand-border flex flex-col justify-between hover:shadow-md transition-shadow">
+                        <div>
+                            <div class="w-10 h-10 rounded-lg bg-brand-secondary text-brand-card flex items-center justify-center font-bold text-sm mb-4">03</div>
+                            <h3 class="font-serif text-lg font-bold text-brand-primary">Clubes VIP & Ecossistemas Fechados</h3>
+                            <p class="text-xs text-brand-accent font-semibold mt-1">Antecipação Silenciosa via WhatsApp</p>
+                            <p class="text-xs text-brand-secondary mt-3 leading-relaxed">
+                                Confina consumidoras em grupos restritos de WhatsApp e libera o "D-Day Antecipado" com 48h de prioridade e cupons exclusivos, vendendo alto volume antes do mercado geral.
+                            </p>
+                        </div>
+                        <div class="mt-6 pt-4 border-t border-brand-border/60 text-xs space-y-2">
+                            <div><strong class="text-brand-primary">Proposta de Valor:</strong> Garantia de estoque e prioridade na escolha de numerações (38 a 42).</div>
+                            <div><strong class="text-brand-primary">Senso de Urgência:</strong> Pressão comunitária e consciência de que milhares competem pelas mesmas peças.</div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Interactive Strategy Breakdown -->
+                <div class="mt-8 p-6 bg-brand-softBg/50 rounded-xl border border-brand-border">
+                    <h4 class="text-sm font-bold text-brand-primary uppercase tracking-wide">Como aplicar na Operação de 60 Dias:</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 text-xs">
+                        <div class="bg-brand-card p-4 rounded-lg border border-brand-border">
+                            <span class="font-bold text-brand-accent">Semanas 1 a 3:</span> Lançar Cápsulas Funcionais para reativar base e testar aceitação de combinações com foco em margem alta.
+                        </div>
+                        <div class="bg-brand-card p-4 rounded-lg border border-brand-border">
+                            <span class="font-bold text-brand-accent">Semanas 4 a 6:</span> Intercalar Drops Temáticos de 48h para limpar lotes de curva C e modelos de menor saída.
+                        </div>
+                        <div class="bg-brand-card p-4 rounded-lg border border-brand-border">
+                            <span class="font-bold text-brand-accent">Semanas 7 a 8:</span> Abrir Grupo VIP no WhatsApp para captação massiva e abertura antecipada de Black Friday.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: ENGENHARIA DE PRICING -->
+        <section id="sec-pricing" class="tab-content space-y-8 hidden">
+            <div class="bg-brand-card rounded-2xl p-6 sm:p-8 border border-brand-border shadow-sm">
+                <div class="max-w-3xl">
+                    <span class="text-xs font-bold text-brand-accent uppercase tracking-widest bg-brand-tag px-3 py-1 rounded-md">Arquitetura Financeira</span>
+                    <h2 class="text-2xl sm:text-3xl font-serif font-semibold text-brand-primary mt-3">Engenharia de Ofertas e Proteção de Margem Bruta</h2>
+                    <p class="text-brand-secondary text-sm sm:text-base mt-3 leading-relaxed">
+                        Para escoar 30.000 unidades mantendo o Ticket Médio na faixa de R$ 350,00 a R$ 450,00, a operação não deve utilizar cortes lineares de preço. O segredo é alavancar a quantidade de itens por carrinho (UPT), diluindo o CAC e custos logísticos fixos.
+                    </p>
+                </div>
+
+                <!-- Simulation Interactive Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mt-8">
+                    
+                    <!-- Left: Interactive Pricing Chart -->
+                    <div class="lg:col-span-7 bg-brand-bg p-6 rounded-xl border border-brand-border flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-serif text-base font-bold text-brand-primary">Simulação de Desconto Progressivo</h3>
+                                <span class="text-xs font-semibold text-brand-accent bg-brand-card px-2 py-1 rounded border border-brand-border">Tabela 1 Relatório</span>
+                            </div>
+                            <p class="text-xs text-brand-secondary mb-4">
+                                Venda de produtos com Preço Base de R$ 200,00 e CMV de R$ 60,00/unid. Observe como o Lucro Bruto Absoluto dispara enquanto a Margem Bruta mantém sustentabilidade.
+                            </p>
+                        </div>
+
+                        <!-- Chart Container -->
+                        <div class="chart-container">
+                            <canvas id="pricingChart"></canvas>
+                        </div>
+
+                        <div class="text-[11px] text-brand-secondary text-center mt-2">
+                            *Demonstração do triplicamento do Lucro Bruto Absoluto (R$ 140 → R$ 400) com redução marginal controlada da margem %.
+                        </div>
+                    </div>
+
+                    <!-- Right: Dynamic Cart & Margins Simulator -->
+                    <div class="lg:col-span-5 bg-brand-softBg/60 p-6 rounded-xl border border-brand-border flex flex-col justify-between space-y-4">
+                        <div>
+                            <h3 class="font-serif text-base font-bold text-brand-primary mb-1">Calculadora Interativa de Carrinho</h3>
+                            <p class="text-xs text-brand-secondary">Simule a diluição de custos ao incentivar mais unidades por compra.</p>
+                        </div>
+
+                        <div class="space-y-4 text-xs">
+                            <div>
+                                <label class="font-bold text-brand-primary block mb-1">Selecione o Número de Peças (UPT):</label>
+                                <div class="grid grid-cols-4 gap-2">
+                                    <button onclick="updateCartSim(1)" id="upt-btn-1" class="upt-btn py-2 bg-brand-accent text-white font-bold rounded-lg text-center transition-all">1 Item</button>
+                                    <button onclick="updateCartSim(2)" id="upt-btn-2" class="upt-btn py-2 bg-brand-card text-brand-primary font-bold rounded-lg border border-brand-border text-center hover:bg-brand-tag transition-all">2 Itens</button>
+                                    <button onclick="updateCartSim(3)" id="upt-btn-3" class="upt-btn py-2 bg-brand-card text-brand-primary font-bold rounded-lg border border-brand-border text-center hover:bg-brand-tag transition-all">3 Itens</button>
+                                    <button onclick="updateCartSim(4)" id="upt-btn-4" class="upt-btn py-2 bg-brand-card text-brand-primary font-bold rounded-lg border border-brand-border text-center hover:bg-brand-tag transition-all">4 Itens</button>
+                                </div>
+                            </div>
+
+                            <div class="bg-brand-card p-4 rounded-lg border border-brand-border space-y-2">
+                                <div class="flex justify-between">
+                                    <span class="text-brand-secondary">Desconto Aplicado:</span>
+                                    <span id="sim-discount" class="font-bold text-brand-accent">0% (R$ 0,00)</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-brand-secondary">Receita Total Bruta:</span>
+                                    <span id="sim-revenue" class="font-bold text-brand-primary">R$ 200,00</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-brand-secondary">CMV Total (R$ 60/un):</span>
+                                    <span id="sim-cmv" class="font-bold text-brand-secondary">R$ 60,00</span>
+                                </div>
+                                <div class="flex justify-between border-t border-brand-border pt-2 text-sm">
+                                    <span class="font-bold text-brand-primary">Lucro Bruto Gerado:</span>
+                                    <span id="sim-profit" class="font-bold text-green-700">R$ 140,00</span>
+                                </div>
+                                <div class="flex justify-between text-xs">
+                                    <span class="text-brand-secondary">Margem Bruta %:</span>
+                                    <span id="sim-margin" class="font-semibold text-brand-primary">70.0%</span>
+                                </div>
+                            </div>
+
+                            <div class="bg-brand-card p-3 rounded-lg border border-brand-border text-[11px] text-brand-secondary">
+                                <strong class="text-brand-primary">Impacto no CAC & Frete:</strong> Ao converter 4 peças em 1 transação em vez de 4 compras individuais, a operação economiza até <span class="font-bold text-brand-accent">R$ 120,00 em logística e mídia duplicada</span>.
+                            </div>
+                        </div>
+
+                        <div class="text-[11px] text-brand-secondary">
+                            *Mecânica validada por marcas como Principessa ("Escolha Premiada") para proteger o EBITDA final.
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Complementary Tactics Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div class="bg-brand-bg p-5 rounded-xl border border-brand-border">
+                        <h4 class="font-serif font-bold text-sm text-brand-primary">Vendas Casadas & Combos "Look Pronto"</h4>
+                        <p class="text-xs text-brand-secondary mt-2 leading-relaxed">
+                            Agrupa SKUs complementares (ex: blazer de linho + calça alfaiataria + regata de seda). Ancoragem visual explícita: exibe valor individual parcelado de R$ 1.350,00 cortado ao lado da oferta integrada por R$ 980,00. Redireciona o foco da cliente do preço total para a economia percebida de R$ 370,00 (Exemplo Damyller).
+                        </p>
+                    </div>
+
+                    <div class="bg-brand-bg p-5 rounded-xl border border-brand-border">
+                        <h4 class="font-serif font-bold text-sm text-brand-primary">Frete Inteligente & Captura de Dados</h4>
+                        <p class="text-xs text-brand-secondary mt-2 leading-relaxed">
+                            Trava o Frete Grátis acima de R$ 249,90 ou R$ 280,00. Como peças de entrada custam em média R$ 199,00, a cliente adiciona ativamente um acessório ou regata para evitar o frete de R$ 35,00. Cupons de 10% a 15% OFF exigem invariavelmente cadastro do CPF/e-mail para alimentar a base de First-Party Data.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- TAB 3: META ADS & CRIATIVOS -->
+        <section id="sec-meta-ads" class="tab-content space-y-8 hidden">
+            <div class="bg-brand-card rounded-2xl p-6 sm:p-8 border border-brand-border shadow-sm">
+                <div class="max-w-3xl">
+                    <span class="text-xs font-bold text-brand-accent uppercase tracking-widest bg-brand-tag px-3 py-1 rounded-md">Mídia Pago & Performance</span>
+                    <h2 class="text-2xl sm:text-3xl font-serif font-semibold text-brand-primary mt-3">Estratégia de Tráfego Pago e Tipologia de Criativos</h2>
+                    <p class="text-brand-secondary text-sm sm:text-base mt-3 leading-relaxed">
+                        Com o CPM no segmento de moda feminina atingindo R$ 28,00 no leilão do Meta Ads, o criativo assumiu a função primária de segmentação e conversão. Fotos tradicionais de estúdio com fundo branco perderam tração para conteúdos autênticos que solucionam objeções.
+                    </p>
+                </div>
+
+                <!-- Formats Showcase Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                    
+                    <div class="bg-brand-bg p-5 rounded-xl border border-brand-border space-y-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs font-bold bg-brand-primary text-white px-2 py-0.5 rounded">Topo de Funil</span>
+                            <span class="text-xs font-semibold text-brand-accent">UGC Autêntico</span>
+                        </div>
+                        <h3 class="font-serif font-bold text-base text-brand-primary">Vídeos de Versatilidade & Routine</h3>
+                        <p class="text-xs text-brand-secondary leading-relaxed">
+                            Criadoras reais demonstrando a transição da mesma peça: alfaiataria com salto para reunião de trabalho e com tênis/t-shirt para o fim de semana.
+                        </p>
+                        <div class="bg-brand-card p-3 rounded-lg text-[11px] text-brand-primary border border-brand-border font-medium">
+                            🎯 Objetivo: Validar o conceito de "guarda-roupa inteligente" e humanizar a marca.
+                        </div>
+                    </div>
+
+                    <div class="bg-brand-bg p-5 rounded-xl border border-brand-border space-y-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs font-bold bg-brand-primary text-white px-2 py-0.5 rounded">Meio de Funil</span>
+                            <span class="text-xs font-semibold text-brand-accent">Macro Texturas 4K</span>
+                        </div>
+                        <h3 class="font-serif font-bold text-base text-brand-primary">Detalhes Construtivos & Tecidos</h3>
+                        <p class="text-xs text-brand-secondary leading-relaxed">
+                            Takes em altíssima definição no acabamento interno dos blazers, costura, caimento do crepe e textura do linho/tricot.
+                        </p>
+                        <div class="bg-brand-card p-3 rounded-lg text-[11px] text-brand-primary border border-brand-border font-medium">
+                            🎯 Objetivo: Ancorar a qualidade superior frente às varejistas de fast-fashion de poliéster.
+                        </div>
+                    </div>
+
+                    <div class="bg-brand-bg p-5 rounded-xl border border-brand-border space-y-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs font-bold bg-brand-primary text-white px-2 py-0.5 rounded">Fundo de Funil</span>
+                            <span class="text-xs font-semibold text-brand-accent">Carrossel Direto</span>
+                        </div>
+                        <h3 class="font-serif font-bold text-base text-brand-primary">Estáticos de Alto Contraste</h3>
+                        <p class="text-xs text-brand-secondary leading-relaxed">
+                            Produtos visualizados no site acompanhados do gatilho de Desconto Progressivo ou avisos de "Poucas Unidades no seu Tamanho".
+                        </p>
+                        <div class="bg-brand-card p-3 rounded-lg text-[11px] text-brand-primary border border-brand-border font-medium">
+                            🎯 Objetivo: Estimulo puramente transacional para imediata conversão de carrinho.
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Objections & Solutions Interactive Table (Tabela 2 Relatório) -->
+                <div class="mt-8 bg-brand-softBg/50 p-6 rounded-xl border border-brand-border">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                        <div>
+                            <h3 class="font-serif text-lg font-bold text-brand-primary">Quebra de Objeções no Remarketing</h3>
+                            <p class="text-xs text-brand-secondary">Soluções táticas para neutralizar os maiores medos da consumidora madura.</p>
+                        </div>
+                        <span class="text-xs font-semibold text-brand-accent bg-brand-card px-2.5 py-1 rounded border border-brand-border">Tabela 2 Relatório</span>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs border-collapse">
+                            <thead>
+                                <tr class="border-b border-brand-border text-brand-primary bg-brand-card">
+                                    <th class="p-3 font-bold">Objeção da Consumidora</th>
+                                    <th class="p-3 font-bold">Ângulo do Criativo (Remarketing)</th>
+                                    <th class="p-3 font-bold">Ferramenta / Tecnologia no E-commerce</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-brand-border/60 bg-brand-card/60">
+                                <tr>
+                                    <td class="p-3 font-medium text-brand-primary">"E se a peça não couber ou a modelagem for pequena?"</td>
+                                    <td class="p-3 text-brand-secondary">Campanhas focadas na precisão das medidas: <em>"Encontre seu tamanho perfeito em segundos."</em></td>
+                                    <td class="p-3 text-brand-secondary">Integração da tecnologia <strong>Sizebay</strong> (Provador Virtual com I.A. cruzando peso, altura e formato de corpo).</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-medium text-brand-primary">"Não consigo visualizar o caimento no meu tipo de corpo."</td>
+                                    <td class="p-3 text-brand-secondary">Criativos "Corpos Reais", exibindo a mesma peça vestida em manequins do 36 ao 48.</td>
+                                    <td class="p-3 text-brand-secondary">Vídeos de movimento do tecido e avisos de modelagem na PDP ("Modelagem ampla, sugerimos tamanho menor").</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-medium text-brand-primary">"E se eu não gostar? A devolução será burocrática?"</td>
+                                    <td class="p-3 text-brand-secondary">Comunicação agressiva: <em>"Primeira Troca Grátis, Rápida e Sem Burocracia."</em></td>
+                                    <td class="p-3 text-brand-secondary">Portal automatizado de autoatendimento para devoluções. Aumenta a conversão na PDP em até 12%.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- TAB 4: CRM & ECOSSISTEMA VIP -->
+        <section id="sec-crm" class="tab-content space-y-8 hidden">
+            <div class="bg-brand-card rounded-2xl p-6 sm:p-8 border border-brand-border shadow-sm">
+                <div class="max-w-3xl">
+                    <span class="text-xs font-bold text-brand-accent uppercase tracking-widest bg-brand-tag px-3 py-1 rounded-md">Retenção & Canais Proprietários</span>
+                    <h2 class="text-2xl sm:text-3xl font-serif font-semibold text-brand-primary mt-3">Playbook de CRM e Vendas Conversacionais via WhatsApp</h2>
+                    <p class="text-brand-secondary text-sm sm:text-base mt-3 leading-relaxed">
+                        No quarto trimestre, o leilão de mídia paga atinge o pico inflacionário. Operações de alta performance protegem sua margem canalizando tráfego para ecossistemas fechados, gerando picos de faturamento com custo marginal de mídia próximo a zero.
+                    </p>
+                </div>
+
+                <!-- Playbook Steps Interactive Timeline -->
+                <div class="mt-8 space-y-6">
+                    <h3 class="font-serif text-lg font-bold text-brand-primary">Trilha Tática de Antecipação no WhatsApp</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        
+                        <!-- Phase 1 -->
+                        <div class="bg-brand-bg p-6 rounded-xl border-l-4 border-l-brand-secondary border-t border-r border-b border-brand-border relative">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-brand-secondary bg-brand-card px-2 py-0.5 rounded border border-brand-border">Fase 1 • D-30 a D-15</span>
+                            <h4 class="font-serif font-bold text-base text-brand-primary mt-2">Captação & Montagem de Lista VIP</h4>
+                            <ul class="text-xs text-brand-secondary space-y-2 mt-3 list-disc list-inside">
+                                <li>Anúncios e pop-ups direcionam tráfego para Landing Page de captura.</li>
+                                <li>Moeda de troca: Acesso antecipado exclusivo e garantia de estoque na Black Friday.</li>
+                                <li>Acúmulo de Leads qualificados de alto interesse.</li>
+                            </ul>
+                        </div>
+
+                        <!-- Phase 2 -->
+                        <div class="bg-brand-bg p-6 rounded-xl border-l-4 border-l-brand-accent border-t border-r border-b border-brand-border relative">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-brand-accent bg-brand-card px-2 py-0.5 rounded border border-brand-border">Fase 2 • D-15 a D-1</span>
+                            <h4 class="font-serif font-bold text-base text-brand-primary mt-2">Aquecimento & Spoilers Exclusivos</h4>
+                            <ul class="text-xs text-brand-secondary space-y-2 mt-3 list-disc list-inside">
+                                <li>Usuárias confinadas em grupos fechados e silenciados no WhatsApp.</li>
+                                <li>Pílulas de conteúdo: bastidores do estoque e revelação de regras de desconto.</li>
+                                <li>Uso de agentes de IA (OmniChat) para sanar dúvidas em escala (-74% tempo de resposta).</li>
+                            </ul>
+                        </div>
+
+                        <!-- Phase 3 -->
+                        <div class="bg-brand-bg p-6 rounded-xl border-l-4 border-l-green-700 border-t border-r border-b border-brand-border relative">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-green-700 bg-brand-card px-2 py-0.5 rounded border border-brand-border">Fase 3 • D-Day Antecipado</span>
+                            <h4 class="font-serif font-bold text-base text-brand-primary mt-2">Conversão Silenciosa (48h-72h Antes)</h4>
+                            <ul class="text-xs text-brand-secondary space-y-2 mt-3 list-disc list-inside">
+                                <li>Disparo de link restrito ou cupom exclusivo diretamente nos grupos.</li>
+                                <li>Giro acelerado do inventário antes da abertura para o mercado aberto.</li>
+                                <li>Caso real: FARM Rio teve incremento de +67% na conversão com esta tática.</li>
+                            </ul>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- RFM Segmentation Strategy -->
+                <div class="mt-8 p-6 bg-brand-softBg/50 rounded-xl border border-brand-border">
+                    <h3 class="font-serif text-lg font-bold text-brand-primary mb-2">Segmentação por Matriz RFM (Recência, Frequência, Valor)</h3>
+                    <p class="text-xs text-brand-secondary mb-4">Evite disparos genéricos em massa. Personalize as ofertas com base no comportamento histórico do cliente na base de dados.</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                        <div class="bg-brand-card p-4 rounded-lg border border-brand-border">
+                            <span class="font-bold text-brand-primary block text-sm">Clientes "Campeões"</span>
+                            <span class="text-[10px] text-brand-accent font-semibold block mb-2">Alto Valor / Frequentes</span>
+                            <p class="text-brand-secondary">Não oferecer descontos agressivos de liquidação. Enviar convite para acervo VIP, combos premium e acesso em primeira mão a peças exclusivas.</p>
+                        </div>
+
+                        <div class="bg-brand-card p-4 rounded-lg border border-brand-border">
+                            <span class="font-bold text-brand-primary block text-sm">Clientes "Em Risco"</span>
+                            <span class="text-[10px] text-brand-accent font-semibold block mb-2">Compraram há > 90 dias</span>
+                            <p class="text-brand-secondary">Gatilhos de reativação: ofertas de Desconto Progressivo robusto e cupom de "Frete Grátis no Retorno" para quebrar a inércia de compra.</p>
+                        </div>
+
+                        <div class="bg-brand-card p-4 rounded-lg border border-brand-border">
+                            <span class="font-bold text-brand-primary block text-sm">Clientes "Hibernantes"</span>
+                            <span class="text-[10px] text-brand-accent font-semibold block mb-2">Compra Única Antiga</span>
+                            <p class="text-brand-secondary">Apelo massivo transacional: Drops Promocionais Flash de 48h com urgência de estoque para limpar itens de menor giro.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- TAB 5: AVALIAÇÃO COMPARATIVA & MATRIZ -->
+        <section id="sec-matriz" class="tab-content space-y-8 hidden">
+            <div class="bg-brand-card rounded-2xl p-6 sm:p-8 border border-brand-border shadow-sm">
+                <div class="max-w-3xl">
+                    <span class="text-xs font-bold text-brand-accent uppercase tracking-widest bg-brand-tag px-3 py-1 rounded-md">Avaliação de Risco & Retorno</span>
+                    <h2 class="text-2xl sm:text-3xl font-serif font-semibold text-brand-primary mt-3">Quadro Comparativo e Recomendação Final</h2>
+                    <p class="text-brand-secondary text-sm sm:text-base mt-3 leading-relaxed">
+                        Confronto analítico das 3 metodologias comerciais avaliando a capacidade de escoamento das 30.000 peças em 60 dias versus a preservação do Ticket Médio e do valor percebido da marca.
+                    </p>
+                </div>
+
+                <!-- Comparison Interactive Table (Tabela 3 Relatório) -->
+                <div class="mt-8 overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-brand-primary text-brand-bg">
+                                <th class="p-4 font-bold rounded-tl-lg">Modalidade Estratégica</th>
+                                <th class="p-4 font-bold">Prós (Vantagens Estruturais)</th>
+                                <th class="p-4 font-bold">Contras (Desafios Operacionais)</th>
+                                <th class="p-4 font-bold rounded-tr-lg">Viabilidade (30k Peças / 60 Dias) vs. Ticket Médio</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-brand-border bg-brand-card">
+                            <tr class="hover:bg-brand-softBg/30 transition-colors">
+                                <td class="p-4 font-bold text-brand-primary align-top">
+                                    1. Guarda-Roupa Inteligente
+                                    <span class="block text-[10px] font-normal text-brand-secondary mt-1">(Cápsulas e Combos)</span>
+                                </td>
+                                <td class="p-4 text-brand-secondary align-top">
+                                    Eleva radicalmente o Ticket Médio (AOV) e o UPT. Blinda totalmente a imagem da marca. Racionaliza o estoque ocioso transformando-o em utilidade.
+                                </td>
+                                <td class="p-4 text-brand-secondary align-top">
+                                    Exige intenso esforço fotográfico, curadoria criativa e educação da consumidora. Apresenta giro de estoque mais lento.
+                                </td>
+                                <td class="p-4 align-top">
+                                    <span class="inline-block px-2 py-1 rounded text-[10px] font-bold bg-yellow-100 text-yellow-800 mb-1">Giro Moderado / Alta Proteção</span>
+                                    <p class="text-[11px] text-brand-secondary">Ideal para peças nobres (blazers e alfaiataria). Isoladamente não escoa 30k peças em 60 dias.</p>
+                                </td>
+                            </tr>
+
+                            <tr class="hover:bg-brand-softBg/30 transition-colors">
+                                <td class="p-4 font-bold text-brand-primary align-top">
+                                    2. Drops Promocionais Curtos
+                                    <span class="block text-[10px] font-normal text-brand-secondary mt-1">(Flash Sales & Desconto Progressivo)</span>
+                                </td>
+                                <td class="p-4 text-brand-secondary align-top">
+                                    Gera injeção de caixa agressiva e imediata. O Desconto Progressivo limpa categorias encalhadas diluindo frete e CAC.
+                                </td>
+                                <td class="p-4 text-brand-secondary align-top">
+                                    Risco de erro no cálculo de margem. Altíssima frequência pode acostumar a cliente a esperar por descontos.
+                                </td>
+                                <td class="p-4 align-top">
+                                    <span class="inline-block px-2 py-1 rounded text-[10px] font-bold bg-green-100 text-green-800 mb-1">Alta Viabilidade / Média Proteção</span>
+                                    <p class="text-[11px] text-brand-secondary">Motor tático principal para mover grandes volumes de estoque com margem global protegida.</p>
+                                </td>
+                            </tr>
+
+                            <tr class="hover:bg-brand-softBg/30 transition-colors">
+                                <td class="p-4 font-bold text-brand-primary align-top">
+                                    3. Clubes VIP
+                                    <span class="block text-[10px] font-normal text-brand-secondary mt-1">(WhatsApp / CRM Pré-Black Friday)</span>
+                                </td>
+                                <td class="p-4 text-brand-secondary align-top">
+                                    CAC marginal nulo na conversão. Gera comportamento compulsivo pela pressão comunitária e escassez tangível das grades.
+                                </td>
+                                <td class="p-4 text-brand-secondary align-top">
+                                    Depende de base de dados prévia (RFM) e ferramentas de automação no WhatsApp à prova de gargalos técnicos.
+                                </td>
+                                <td class="p-4 align-top">
+                                    <span class="inline-block px-2 py-1 rounded text-[10px] font-bold bg-emerald-100 text-emerald-900 mb-1">Altíssima Viabilidade / Alta Proteção</span>
+                                    <p class="text-[11px] text-brand-secondary">Tática suprema para os 15 dias finais. Preserva os preços visíveis na vitrine pública da loja.</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Strategic Conclusion Callout -->
+                <div class="mt-8 bg-brand-primary text-brand-bg p-6 sm:p-8 rounded-xl space-y-4">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 rounded-full bg-brand-accent"></span>
+                        <h3 class="font-serif text-lg font-bold">Veredito e Recomendação Executiva de Growth</h3>
+                    </div>
+                    <p class="text-xs sm:text-sm text-brand-border leading-relaxed">
+                        A solução ideal para escoar as <strong>30.000 peças em 60 dias</strong> não é a escolha de uma única estratégia, mas sim a <strong>execução orquestrada em 3 ondas</strong>:
+                    </p>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 text-xs">
+                        <div class="bg-brand-card/10 p-4 rounded-lg border border-brand-border/20">
+                            <strong class="text-brand-accent block mb-1">Fase 1 (Dia 1 ao 20):</strong>
+                            Ativação de Cápsulas Funcionais de Guarda-Roupa Inteligente focadas em combos e elevação de UPT para cobrir o inventário nobre.
+                        </div>
+                        <div class="bg-brand-card/10 p-4 rounded-lg border border-brand-border/20">
+                            <strong class="text-brand-accent block mb-1">Fase 2 (Dia 21 ao 45):</strong>
+                            Entrada da esteira de Drops Promocionais Curtos com Desconto Progressivo por volume de carrinho (2, 3 e 4+ itens).
+                        </div>
+                        <div class="bg-brand-card/10 p-4 rounded-lg border border-brand-border/20">
+                            <strong class="text-brand-accent block mb-1">Fase 3 (Dia 46 ao 60):</strong>
+                            Fechamento do ecossistema VIP no WhatsApp para liquidação antecipada pré-Black Friday, escoando o residual de curva C com custo zero de mídia.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-brand-card border-t border-brand-border mt-auto py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-brand-secondary gap-2">
+            <div>
+                <strong>Consultoria Le Dress</strong> • Relatório Estratégico de Performance & Growth E-commerce 2026
+            </div>
+            <div>
+                Desenvolvido para análise executiva de escoamento e retenção de margem
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic & Chart.js Initialization -->
+    <script>
+        // Tab Switching Logic
+        function switchTab(tabId) {
+            // Hide all tab content
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            
+            // Remove active state from all buttons
+            document.querySelectorAll('.nav-button').forEach(btn => {
+                btn.classList.remove('nav-active');
+                btn.classList.add('text-brand-secondary');
+            });
+
+            // Show selected section
+            const targetSec = document.getElementById('sec-' + tabId);
+            if(targetSec) targetSec.classList.remove('hidden');
+
+            // Highlight active button
+            const activeBtn = document.getElementById('tab-' + tabId);
+            if(activeBtn) {
+                activeBtn.classList.add('nav-active');
+                activeBtn.classList.remove('text-brand-secondary');
+            }
+
+            // Trigger chart resize if switching to pricing tab
+            if(tabId === 'pricing' && window.pricingChartInstance) {
+                setTimeout(() => {
+                    window.pricingChartInstance.resize();
+                }, 100);
+            }
+        }
+
+        // Interactive Pricing Simulator Logic
+        const simData = {
+            1: { discountPerc: 0, discountVal: 0, revenue: 200, cmv: 60, profit: 140, margin: '70.0%' },
+            2: { discountPerc: 10, discountVal: 40, revenue: 360, cmv: 120, profit: 240, margin: '66.6%' },
+            3: { discountPerc: 15, discountVal: 90, revenue: 510, cmv: 180, profit: 330, margin: '64.7%' },
+            4: { discountPerc: 20, discountVal: 160, revenue: 640, cmv: 240, profit: 400, margin: '62.5%' }
+        };
+
+        function updateCartSim(upt) {
+            // Update buttons styling
+            document.querySelectorAll('.upt-btn').forEach((btn, index) => {
+                if(index + 1 === upt) {
+                    btn.className = 'upt-btn py-2 bg-brand-accent text-white font-bold rounded-lg text-center transition-all';
+                } else {
+                    btn.className = 'upt-btn py-2 bg-brand-card text-brand-primary font-bold rounded-lg border border-brand-border text-center hover:bg-brand-tag transition-all';
+                }
+            });
+
+            const data = simData[upt];
+            document.getElementById('sim-discount').textContent = `${data.discountPerc}% (R$ ${data.discountVal},00)`;
+            document.getElementById('sim-revenue').textContent = `R$ ${data.revenue},00`;
+            document.getElementById('sim-cmv').textContent = `R$ ${data.cmv},00`;
+            document.getElementById('sim-profit').textContent = `R$ ${data.profit},00`;
+            document.getElementById('sim-margin').textContent = data.margin;
+        }
+
+        // Initialize Chart.js Chart
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('pricingChart');
+            if(ctx) {
+                window.pricingChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['1 Peça (0% Desc)', '2 Peças (10% Desc)', '3 Peças (15% Desc)', '4 Peças (20% Desc)'],
+                        datasets: [
+                            {
+                                type: 'bar',
+                                label: 'Lucro Bruto Absoluto (R$)',
+                                data: [140, 240, 330, 400],
+                                backgroundColor: '#C86A4B',
+                                borderRadius: 6,
+                                yAxisID: 'y'
+                            },
+                            {
+                                type: 'line',
+                                label: 'Margem Bruta (%)',
+                                data: [70.0, 66.6, 64.7, 62.5],
+                                borderColor: '#2A2421',
+                                backgroundColor: '#2A2421',
+                                borderWidth: 3,
+                                pointRadius: 5,
+                                pointBackgroundColor: '#FAF7F2',
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' },
+                                    color: '#2A2421',
+                                    usePointStyle: true
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) label += ': ';
+                                        if (context.dataset.type === 'line') {
+                                            label += context.parsed.y + '%';
+                                        } else {
+                                            label += 'R$ ' + context.parsed.y + ',00';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { font: { family: 'Plus Jakarta Sans', size: 10 }, color: '#8A7A70' }
+                            },
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: { display: true, text: 'Lucro Bruto (R$)', font: { size: 10, weight: 'bold' }, color: '#C86A4B' },
+                                ticks: { font: { size: 10 }, color: '#8A7A70' },
+                                grid: { color: '#E8DFD5' }
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                min: 50,
+                                max: 80,
+                                title: { display: true, text: 'Margem Bruta (%)', font: { size: 10, weight: 'bold' }, color: '#2A2421' },
+                                ticks: {
+                                    font: { size: 10 },
+                                    color: '#8A7A70',
+                                    callback: function(value) { return value + '%'; }
+                                },
+                                grid: { drawOnChartArea: false }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
